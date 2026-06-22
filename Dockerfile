@@ -1,13 +1,18 @@
-FROM node:20-alpine AS builder
+FROM node:20-alpine
+
 WORKDIR /app
+
+# Paketlar ro'yxatini ko'chirib o'tamiz
 COPY package*.json ./
+
+# Kerakli kutubxonalarni yuklaymiz
 RUN npm ci
+
+# Hamma kodlarni (server.js va h.k.) ko'chiramiz
 COPY . .
 
-FROM node:20-alpine
-WORKDIR /app
-COPY --from=builder /app/dist ./dist
-COPY package*.json ./
-RUN npm ci --production
-EXPOSE 8080
-CMD ["node", "dist/index.js"]
+# Server ishlaydigan port (Render odatda 10000 ishlatadi)
+EXPOSE 10000
+
+# Loyihani ishga tushiramiz
+CMD ["node", "server.js"]
