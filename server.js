@@ -11,7 +11,13 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 const GROQ_API_KEY = process.env.GROQ_API_KEY;
 
-app.use(cors());
+// CORSni kengaytirilgan sozlamasi (Frontend havolasini ham kiritish mumkin)
+app.use(cors({
+  origin: '*', // Vercel-ga joylaganingizdan keyin '*' o'rniga frontend URLni qo'ysangiz yanada xavfsiz bo'ladi
+  methods: ['GET', 'POST'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
+
 app.use(express.json());
 
 const uploadDir = path.join(__dirname, 'uploads');
@@ -26,7 +32,7 @@ async function transcribeWithGroq(filePath, originalName) {
   const formData = new FormData();
   formData.append('file', fs.createReadStream(filePath), originalName);
   formData.append('model', 'whisper-large-v3');
-  formData.append('response_format', 'verbose_json'); // Vaqt segmentlari uchun majburiy
+  formData.append('response_format', 'verbose_json'); 
 
   const response = await axios.post(
     'https://api.groq.com/openai/v1/audio/transcriptions',
@@ -40,7 +46,6 @@ async function transcribeWithGroq(filePath, originalName) {
     }
   );
 
-  // Segmentlarni formatlash (vaqt|matn ko'rinishida)
   if (response.data && response.data.segments) {
     return response.data.segments.map(seg => {
       const formatTime = (seconds) => {
@@ -95,4 +100,7 @@ app.post('/api/transcribe-url', async (req, res) => {
   }
 });
 
-app.listen(PORT, () => console.log(`✅ Server: http://localhost:${PORT}`));
+// Render uchun eng to'g'ri ishga tushirish (0.0.0.0 IP orqali)
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`✅ Server is running on port ${PORT}`);
+});
